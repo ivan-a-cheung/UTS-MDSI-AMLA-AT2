@@ -27,13 +27,19 @@ def extract_state(store):
     x = store.split('_')
     return x[0]
 
-def merge_events(df):
+def merge_events(df, date):
     df_events = pd.read_csv('sources/clean_events.csv')
-    df = pd.merge(df, df_events, left_on = ['date'], right_on = ['date'], how = 'left')
-    df = df.fillna(0)
+    event = df_events.loc[df_events['date'] == date]
+    del(df_events)
+    event = event[event.columns[1:]]
+    df = df.join(event).fillna(0)
+    df[event.columns] = df[event.columns].astype(int)
+    
+    #df = pd.merge(df, df_events, left_on = ['date'], right_on = ['date'], how = 'left')
+    #df = df.fillna(0)
 
     df.drop('date')
-    del(df_events)
+    
     return df
 
 
@@ -68,7 +74,7 @@ def predict(item:str, store:str, date:str):
 
     }]
     df = pd.DataFrame.from_dict(input)
-    df = merge_events(df)
+    df = merge_events(df, date)
     
     oe = load('../models/item_encoder.joblib')
     ohe = load('../models/ohe_encorder.joblib')

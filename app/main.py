@@ -1,14 +1,15 @@
 from fastapi import FastAPI
-from starlette.responses import JSONResponse
 from joblib import load
 import pandas as pd
 from sklearn.preprocessing import OrdinalEncoder
 from sklearn.preprocessing import OneHotEncoder
 from sklearn.ensemble import RandomForestRegressor
+from sklearn.ensemble import HistGradientBoostingRegressor
 
 
 app = FastAPI()
 gb = load('../models/predictive/xgb.joblib')
+fc = load('../models/forecasting/forecast.joblib')
 
 def extract_date(d):
     day = d.day_of_week
@@ -101,11 +102,38 @@ def predict(item:str, store:str, date:str):
     return {"item": item, 'store': store, 'date': date, 'predicted_revenue': pred}
 
 @app.get("/sales/national")
-def predict(date:str):
+def predict(date:str = ''):
+    if(date == ''):
+        d = pd.to_datetime('today')
+    else:
+        d = pd.to_datetime(date, errors='coerce')
+        if pd.isna(d):
+            return 'invalid date detected. Please use YYYY-MM-DD format'
 
-    d = pd.to_datetime(date, errors='coerce')
-    if pd.isna(d):
-        return 'invalid date detected. Please use YYYY-MM-DD format'
+    dict = []
+    for num in range(0,7):
+        dict.append(d + pd.DateOffset(days=num))
 
+    df = pd.DataFrame().from_dict(dict).rename(columns={0:"date"})
+    del(d)
+    del(dict)
 
-    return {"Hello": "World"}
+    df['day_of_year'] = df['date'].dt.day_of_year
+    df['day_of_week'] = df['date'].dt.day_of_week
+    df['month'] = df['date'].dt.month
+    df['year'] = df['date'].dt.year
+
+    ##temp // test
+    df['event_cultural'] = 0
+    df['event_national'] = 0
+    df['event_religious'] = 0
+    df['event_sport'] = 0
+
+    ## reorder
+    results = df.pop('date')
+    df = df[['event_cultural','event_national','event_religious','event_sport','day_of_year','day_of_week','month','year']]
+
+    results['pred'] = fc.predict(df)
+    
+
+    return results.to_dict

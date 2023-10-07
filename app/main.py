@@ -45,11 +45,20 @@ def merge_events(df, date):
 
 @app.get("/")
 def read_root():
-    return {"Hello": "World"}
+    return '''This app has been developed to predict revenue across the company stores. Two predictive calcualtions are available:
+    1) predict expected revenue of an item in a given store, by date
+    2) predict a 7 day forecast of total company revenue by nominated date
+
+    The API endpoints are:
+    (GET) / - this page
+    (GET) /health/ - confirms status of the app
+    (GET) /sales/national?date=YYYY-MM-DD returns a 7 day forecast of company revenue, starting from input date. if no date is provided, forecast will be applied on today's date
+    (GET) /sales/stores/items/?item=____&store=____&date=YYYY-MM-DD     Predicts expected revenue from items sold at store on the date. All parameters are required for this endpoint to function.
+    '''
 
 @app.get('/health', status_code=200)
 def healthcheck():
-    return 'AMLA AT2 working.'
+    return 'Welcome! AMLA AT2 is working.'
 
 @app.get("/sales/stores/items")
 def predict(item:str, store:str, date:str):
@@ -133,7 +142,7 @@ def forecast(date:str = ''):
     results = pd.DataFrame(df.pop('date'))
     df = df[['event_cultural','event_national','event_religious','event_sport','day_of_year','day_of_week','month','year']]
 
-    results['pred'] = fc.predict(df)
+    results['predicted revenue'] = fc.predict(df)
     
     results['date'] = results['date'].astype(str)
     return results.to_json(orient='records')

@@ -91,8 +91,14 @@ def predict(item:str, store:str, date:str):
 
     pred = gb.predict(test)
     pred = round(pred[0],5)
+
+    del(input)
+    del(df)
+    del(dept_id, cat_id)
+    del(day, month, year)
+    del(d)
     
-    return {"item": item, 'store': store, 'date': date, 'pred': pred}
+    return {"item": item, 'store': store, 'date': date, 'predicted_revenue': pred}
 
 @app.get("/sales/national")
 def predict(date:str):

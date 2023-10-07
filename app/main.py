@@ -76,7 +76,7 @@ def predict(item:str, store:str, date:str):
     df = merge_events(df, date)
     
     oe = load('../models/item_encoder.joblib')
-    ohe = load('../models/ohe_encorder.joblib')
+    ohe = load('../models/ohe_encoder.joblib')
 
     ## perform encoding
     df[['item_id','dept_id', 'store_id']] = oe.transform(df[['item_id','dept_id', 'store_id']])

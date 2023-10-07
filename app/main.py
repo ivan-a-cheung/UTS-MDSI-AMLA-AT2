@@ -2,10 +2,13 @@ from fastapi import FastAPI
 from starlette.responses import JSONResponse
 from joblib import load
 import pandas as pd
+from sklearn.preprocessing import OrdinalEncoder
+from sklearn.preprocessing import OneHotEncoder
+from sklearn.ensemble import RandomForestRegressor
 
 
 app = FastAPI()
-
+rf = load('../models/predictive/random_forest.joblib')
 
 def extract_date(d):
     day = d.day_of_week
@@ -28,6 +31,8 @@ def merge_events(df):
     df_events = pd.read_csv('sources/clean_events.csv')
     df = pd.merge(df, df_events, left_on = ['date'], right_on = ['date'], how = 'left')
     df = df.fillna(0)
+
+    df.drop('date')
     del(df_events)
     return df
 
@@ -47,9 +52,42 @@ def predict(item:str, store:str, date:str):
     if pd.isna(d):
         return 'invalid date detected. Please use YYYY-MM-DD format'
     
+    dept_id, cat_id = extract_item_data(item)
+    day, month, year = extract_date(d)
 
+    input = [{
+        "item_id": item,
+        "dept_id": dept_id,
+        "cat_id": cat_id,
+        "store_id": store,
+        "state_id": extract_state(store),
+        "day_of_week": day,
+        "month": month,
+        "year": year,
+        "date": d
 
-    return {"Hello": "World"}
+    }]
+    df = pd.DataFrame.from_dict(input)
+    df = merge_events(df)
+    
+    oe = load('../models/item_encoder.joblib')
+    ohe = load('../models/ohe_encorder.joblib')
+
+    ## perform encoding
+    df[['item_id','dept_id', 'store_id']] = oe.transform(df[['item_id','dept_id', 'store_id']])
+    test = ohe.transform(df[['cat_id', 'state_id']])
+
+    ##merge encoded columns
+    num_cols = ['event_cultural', 'event_national', 'event_religious', 'event_sport', 'day_of_week', 'month', 'year']
+    test = test.join(df[['item_id','dept_id', 'store_id']])
+    test = test.join(df[num_cols])
+    del(oe)
+    del(ohe)
+
+    pred = rf.predict(test)
+    pred = round(pred[0],5)
+    
+    return {"item": item, 'store': store, 'date': date, 'pred': pred}
 
 @app.get("/sales/national")
 def predict(date:str):

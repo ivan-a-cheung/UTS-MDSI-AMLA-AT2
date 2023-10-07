@@ -8,7 +8,7 @@ from sklearn.ensemble import RandomForestRegressor
 
 
 app = FastAPI()
-rf = load('../models/predictive/random_forest.joblib')
+gb = load('../models/predictive/xgb.joblib')
 
 def extract_date(d):
     day = d.day_of_week
@@ -84,7 +84,7 @@ def predict(item:str, store:str, date:str):
     del(oe)
     del(ohe)
 
-    pred = rf.predict(test)
+    pred = gb.predict(test)
     pred = round(pred[0],5)
     
     return {"item": item, 'store': store, 'date': date, 'pred': pred}

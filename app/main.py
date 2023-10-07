@@ -102,7 +102,7 @@ def predict(item:str, store:str, date:str):
     return {"item": item, 'store': store, 'date': date, 'predicted_revenue': pred}
 
 @app.get("/sales/national")
-def predict(date:str = ''):
+def forecast(date:str = ''):
     if(date == ''):
         d = pd.to_datetime('today')
     else:
@@ -130,10 +130,10 @@ def predict(date:str = ''):
     df['event_sport'] = 0
 
     ## reorder
-    results = df.pop('date')
+    results = pd.DataFrame(df.pop('date'))
     df = df[['event_cultural','event_national','event_religious','event_sport','day_of_year','day_of_week','month','year']]
 
     results['pred'] = fc.predict(df)
     
-
-    return results.to_dict
+    results['date'] = results['date'].astype(str)
+    return results.to_json(orient='records')

@@ -37,8 +37,7 @@ def merge_events(df, date):
     
     #df = pd.merge(df, df_events, left_on = ['date'], right_on = ['date'], how = 'left')
     #df = df.fillna(0)
-
-    df.drop('date')
+    #df.drop('date')
     
     return df
 

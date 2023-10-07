@@ -43,7 +43,7 @@ def merge_events(df, date):
     return df
 
 
-@app.get("/", response_class=PlainTextResponse)
+@app.get("/", response_class='PlainTextResponse')
 def read_root():
     return '''This app has been developed to predict revenue across the company stores. Two predictive calcualtions are available:
     1) predict expected revenue of an item in a given store, by date
